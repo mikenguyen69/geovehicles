@@ -9,6 +9,7 @@ import LandscapeIcon from "@material-ui/icons/LandscapeOutlined";
 import ClearIcon from "@material-ui/icons/Clear";
 import SaveIcon from "@material-ui/icons/SaveTwoTone";
 import Context from '../../context';
+import axios from 'axios';
 
 const colors = [
   {
@@ -51,9 +52,23 @@ const CreatePin = ({ classes }) => {
   const [image, setImage] = useState('');
   const [note, setNote] = useState('');
 
-  const handleSubmit = event => {
+  const handleSubmit = async event => {
     event.preventDefault();
-    console.log(color,type,image,note);
+    const url = await handleImageUpload();
+    console.log({color,type,image, url, note });
+  }
+
+  const handleImageUpload = async () => {
+    const data = new FormData()
+    data.append("file", image)
+    data.append("upload_preset", "geovehicles")
+    data.append("cloud_name", "mikenguyen")
+    const res = await axios.post(
+      "https://api.cloudinary.com/v1_1/mikenguyen/image/upload",
+      data
+    )
+
+    return res.data.url;
   }
 
   const handleDeleteDraft = event => {
