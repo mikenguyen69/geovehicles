@@ -1,5 +1,4 @@
 import React, {useState, useContext} from "react";
-import {GraphQLClient} from 'graphql-request';
 import { withStyles } from "@material-ui/core/styles";
 import TextField from "@material-ui/core/TextField";
 import MenuItem from "@material-ui/core/MenuItem";
@@ -12,42 +11,11 @@ import SaveIcon from "@material-ui/icons/SaveTwoTone";
 import Context from '../../context';
 import axios from 'axios';
 import {CREATE_PIN_MUTATION} from '../../graphql/mutations';
+import {useClient} from '../../client';
 
-const colors = [
-  {
-    value: 'blue',
-    label: 'Delay',
-  },
-  {
-    value: 'green',
-    label: 'On-time',
-  },
-  {
-    value: 'red',
-    label: 'Late',
-  }
-];
-
-const types = [
-  {
-    value: 'car',
-    label: 'Personal Car'
-  },
-  {
-    value: 'taxi',
-    label: 'Taxi'
-  },
-  {
-    value: 'bus',
-    label: 'Normal Bus'
-  },
-  {
-    value: 'doube-bus',
-    label: 'Double-deck Bus'
-  },
-]
 
 const CreatePin = ({ classes }) => {
+  const client = useClient();
   const {state, dispatch} = useContext(Context);
   const [color, setColor] = useState('green');
   const [type, setType] = useState('bus');
@@ -59,23 +27,15 @@ const CreatePin = ({ classes }) => {
     try {
       event.preventDefault();
       setSubmitting(true);
-
-      const idToken = window.gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().id_token;
-
-      const client = new GraphQLClient('http://localhost:4000/graphql', {
-        headers: {authorization: idToken}
-      })
-     
       const url = await handleImageUpload();
       const {draft} = state;
       const {latitude, longitude} = draft;
       const variables = {type, color, image: url,  note, latitude, longitude};
-      
-      console.log("Variables: ", {variables});
-      
-      const {createPin} = await client.request(CREATE_PIN_MUTATION, variables)
+      const {createPin} = await client.request(CREATE_PIN_MUTATION, variables);
       
       console.log("Pin created", {createPin});
+
+      handleDeleteDraft();
     }
     catch(err) {
       console.error("Error while submitting", err);
@@ -248,3 +208,38 @@ const styles = theme => ({
 });
 
 export default withStyles(styles)(CreatePin);
+
+
+const colors = [
+  {
+    value: 'blue',
+    label: 'Delay',
+  },
+  {
+    value: 'green',
+    label: 'On-time',
+  },
+  {
+    value: 'red',
+    label: 'Late',
+  }
+];
+
+const types = [
+  {
+    value: 'car',
+    label: 'Personal Car'
+  },
+  {
+    value: 'taxi',
+    label: 'Taxi'
+  },
+  {
+    value: 'bus',
+    label: 'Normal Bus'
+  },
+  {
+    value: 'doube-bus',
+    label: 'Double-deck Bus'
+  },
+]
