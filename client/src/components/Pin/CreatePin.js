@@ -1,15 +1,169 @@
-import React from "react";
+import React, {useState, useContext} from "react";
 import { withStyles } from "@material-ui/core/styles";
-// import TextField from "@material-ui/core/TextField";
-// import Typography from "@material-ui/core/Typography";
-// import Button from "@material-ui/core/Button";
-// import AddAPhotoIcon from "@material-ui/icons/AddAPhotoTwoTone";
-// import LandscapeIcon from "@material-ui/icons/LandscapeOutlined";
-// import ClearIcon from "@material-ui/icons/Clear";
-// import SaveIcon from "@material-ui/icons/SaveTwoTone";
+import TextField from "@material-ui/core/TextField";
+import MenuItem from "@material-ui/core/MenuItem";
+import Typography from "@material-ui/core/Typography";
+import Button from "@material-ui/core/Button";
+import AddAPhotoIcon from "@material-ui/icons/AddAPhotoTwoTone";
+import LandscapeIcon from "@material-ui/icons/LandscapeOutlined";
+import ClearIcon from "@material-ui/icons/Clear";
+import SaveIcon from "@material-ui/icons/SaveTwoTone";
+import Context from '../../context';
+
+const colors = [
+  {
+    value: 'blue',
+    label: 'Delay',
+  },
+  {
+    value: 'green',
+    label: 'On-time',
+  },
+  {
+    value: 'red',
+    label: 'Late',
+  }
+];
+
+const types = [
+  {
+    value: 'car',
+    label: 'Personal Car'
+  },
+  {
+    value: 'taxi',
+    label: 'Taxi'
+  },
+  {
+    value: 'bus',
+    label: 'Normal Bus'
+  },
+  {
+    value: 'doube-bus',
+    label: 'Double-deck Bus'
+  },
+]
 
 const CreatePin = ({ classes }) => {
-  return <div>CreatePin</div>;
+  const {dispatch} = useContext(Context);
+  const [color, setColor] = useState('green');
+  const [type, setType] = useState('bus');
+  const [image, setImage] = useState('');
+  const [note, setNote] = useState('');
+
+  const handleSubmit = event => {
+    event.preventDefault();
+    console.log(color,type,image,note);
+  }
+
+  const handleDeleteDraft = event => {
+    setColor('');
+    setType('');
+    setImage('');
+    setNote('');
+    dispatch({type: "DELETE_DRAFT"});
+  }
+
+  return (
+    <form className={classes.form}>
+      <Typography 
+        className={classes.alignCenter} 
+        component="h2"
+        variant="h4"
+        color="secondary"
+      >
+        <LandscapeIcon className={classes.iconLarge} /> 
+        Pin Location
+      </Typography>
+      <div>
+      <div className={classes.contentField}>
+        <TextField  
+          id="select-vehicle-type"
+          select
+          name="type"
+          label="Select Vehicle Type" 
+          fullWidth
+          value={type} 
+          onChange={(event) => setType(event.target.value)}         
+        >
+          {types.map(option => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
+            </MenuItem>
+          ))}
+        </TextField>
+       </div>
+       <div className={classes.contentField}>
+        <TextField  
+          id="select-status-type"
+          select
+          name="color"
+          label="Select Status"
+          fullWidth
+          value={color} 
+          onChange={(event) => setColor(event.target.value)}         
+        >
+          {colors.map(option => (
+            <MenuItem key={option.value} value={option.value}>
+              {option.label}
+            </MenuItem>
+          ))}
+        </TextField>
+        </div>
+        <div className={classes.contentField}>
+          <input 
+            accept="image/*" 
+            id="image" 
+            type="file"
+            className="classes.input"
+            onChange={e => setImage(e.target.files[0])}
+          />
+          <label htmlFor="image">
+            <Button style={{color: image && "green"}}
+              component="span"
+              size="small"
+              className={classes.Button}
+            >
+              <AddAPhotoIcon />
+            </Button>
+          </label>
+        </div>
+        <div className={classes.contentField}>
+          <TextField
+            name="note"
+            label="Note"
+            multiline
+            rows="3"
+            margin='normal'
+            fullWidth
+            variant="outlined" 
+            onChange={e => setNote(e.target.value)}
+          />
+        </div>
+        <div className={classes.contentField}>
+          <Button 
+            className={classes.button} 
+            variant="contained" 
+            color="primary" 
+            onClick={handleDeleteDraft}
+          >
+            <ClearIcon className={classes.leftIcon} />
+            Discard
+          </Button>
+          <Button 
+            className={classes.button} 
+            variant="contained" 
+            color="secondary" 
+            disabled={!color.trim()||!type.trim()||!image || !note.trim()}
+            onClick={handleSubmit}
+          >
+            <SaveIcon className={classes.rightIcon}  />
+            Submit
+          </Button>
+        </div>
+      </div>
+    </form>
+  );
 };
 
 const styles = theme => ({
@@ -23,6 +177,7 @@ const styles = theme => ({
   contentField: {
     marginLeft: theme.spacing.unit,
     marginRight: theme.spacing.unit,
+    marginTop: theme.spacing.unit,
     width: "95%"
   },
   input: {
