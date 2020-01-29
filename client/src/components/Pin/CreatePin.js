@@ -1,4 +1,5 @@
 import React, {useState, useContext} from "react";
+import {GraphQLClient} from 'graphql-request';
 import { withStyles } from "@material-ui/core/styles";
 import TextField from "@material-ui/core/TextField";
 import MenuItem from "@material-ui/core/MenuItem";
@@ -10,6 +11,7 @@ import ClearIcon from "@material-ui/icons/Clear";
 import SaveIcon from "@material-ui/icons/SaveTwoTone";
 import Context from '../../context';
 import axios from 'axios';
+import {CREATE_PIN_MUTATION} from '../../graphql/mutations';
 
 const colors = [
   {
@@ -46,16 +48,39 @@ const types = [
 ]
 
 const CreatePin = ({ classes }) => {
-  const {dispatch} = useContext(Context);
+  const {state, dispatch} = useContext(Context);
   const [color, setColor] = useState('green');
   const [type, setType] = useState('bus');
   const [image, setImage] = useState('');
   const [note, setNote] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async event => {
-    event.preventDefault();
-    const url = await handleImageUpload();
-    console.log({color,type,image, url, note });
+    try {
+      event.preventDefault();
+      setSubmitting(true);
+
+      const idToken = window.gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().id_token;
+
+      const client = new GraphQLClient('http://localhost:4000/graphql', {
+        headers: {authorization: idToken}
+      })
+     
+      const url = await handleImageUpload();
+      const {draft} = state;
+      const {latitude, longitude} = draft;
+      const variables = {type, color, image: url,  note, latitude, longitude};
+      
+      console.log("Variables: ", {variables});
+      
+      const {createPin} = await client.request(CREATE_PIN_MUTATION, variables)
+      
+      console.log("Pin created", {createPin});
+    }
+    catch(err) {
+      console.error("Error while submitting", err);
+    }
+    
   }
 
   const handleImageUpload = async () => {
@@ -169,7 +194,7 @@ const CreatePin = ({ classes }) => {
             className={classes.button} 
             variant="contained" 
             color="secondary" 
-            disabled={!color.trim()||!type.trim()||!image || !note.trim()}
+            disabled={!color.trim()||!type.trim()||!image || !note.trim() || submitting}
             onClick={handleSubmit}
           >
             <SaveIcon className={classes.rightIcon}  />
