@@ -5,7 +5,7 @@ import {useClient} from '../client';
 import {GET_PINS_QUERY} from '../graphql/queries';
 
 // import Button from "@material-ui/core/Button";
-// import Typography from "@material-ui/core/Typography";
+import Typography from "@material-ui/core/Typography";
 // import DeleteIcon from "@material-ui/icons/DeleteTwoTone";
 
 import PinIcon from './PinIcon';
@@ -26,7 +26,6 @@ const Map = ({ classes }) => {
   const [userPosition, setUserPosition] = useState({latitude: -36.8484597, longitude: 174.7633315});
   const [popup, setPopup] = useState(null);
 
-
   useEffect(() => {
     getUserPosition()
   },[]);
@@ -46,27 +45,48 @@ const Map = ({ classes }) => {
         const {latitude, longitude} = position.coords;
         
         setViewport({...viewport, latitude, longitude});
-        setUserPosition({latitude, longitude});
-
-        console.log(position.coords);
-        console.log(userPosition);
-
+        setUserPosition({latitude, longitude});       
       });
     }
   }
 
   const handleMapClick = ({lngLat, leftButton}) => {
+    console.log("oh here...");
     if (!leftButton) return;
     if (!state.draft) {
       dispatch({type: "CREATE_DRAFT"})
     }
 
     const [longitude, latitude] = lngLat;
-
+    
     dispatch({
       type: "UPDATE_DRAFT_LOCATION",
       payload: {longitude, latitude}
-    });
+    });    
+  }
+
+  const handleViewPortChange = newViewport => {
+    setViewport(newViewport);
+  }
+
+  const handleSelectPin = pin => {
+    console.log("handleSelectPin: ", pin);
+    setPopup(pin);    
+    dispatch({
+      type: "SET_PIN",
+      payload: pin
+    })
+  }
+
+  const handleShowStatus = color => {
+    if (color === 'green') {
+      return " on time"
+    } else if (color === 'blue') {
+      return " slightly delayed. "
+    }
+    else {
+      return " late!!!!"
+    }
   }
 
   return (
@@ -77,12 +97,12 @@ const Map = ({ classes }) => {
       mapStyle="mapbox://styles/mapbox/streets-v9" 
       mapboxApiAccessToken="pk.eyJ1IjoibWlrZW5ndXllbiIsImEiOiJjazV4OWsyb24yM29pM21vbm1iOWczcWVuIn0.-bnGQr4bUUFasXDdcRqpZw" 
       onClick={handleMapClick}
-      onViewStateChange={newViewport => setViewport(newViewport)}
+      onViewStateChange={handleViewPortChange}
       {...viewport}
     >
       {/* Naviation control*/}
       <div className={classes.navigationControl}>
-        <NavigationControl onViewStateChange={newViewport => setViewport(newViewport)} />
+        <NavigationControl onViewStateChange={handleViewPortChange} />
       </div>
 
       {/* For current user location */}
@@ -116,11 +136,41 @@ const Map = ({ classes }) => {
           latitude={pin.latitude}
           longitude={pin.longitude}
           offsetLeft={-19}
-          offsetTop={-37}
+          offsetTop={-37}           
           >
-          <PinIcon color={pin.color} type={pin.type} />
+          <PinIcon 
+            color={pin.color} 
+            type={pin.type} 
+            onClick={() => handleSelectPin(pin)}
+          />
         </Marker>
       ))}
+
+      {/* Show Popups*/}
+      {popup && (
+        <Popup anchor="top"
+          latitude={popup.latitude}
+          longitude={popup.longitude}
+          closeOnClick={false}
+          onClose={() => setPopup(null)}
+        >
+          <img 
+            className={classes.popupImage}
+            src={popup.image} 
+            alt={popup.type}
+          />
+          <div className={classes.popupTab}>
+            <Typography>
+              <b>{popup.type}</b> {" is "} <font color={popup.color}>{handleShowStatus(popup.color)}</font>
+            </Typography>            
+            <Typography paragraph> 
+              <blockquote>&quot;<i>{popup.note}</i>&quot;</blockquote>
+            </Typography>
+          </div>
+        </Popup>
+      )
+
+      }
     </ReactMapGL>
 
     {/* Blog area to add Pin content */}
